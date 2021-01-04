@@ -25,12 +25,12 @@ CLIENT_ID=parser.get('Login Parameters', 'CLIENT_ID')
 CLIENT_SECRET=parser.get('Login Parameters', 'CLIENT_SECRET')
 TOKEN_USER_NAME=parser.get('User', 'TOKEN_USER_NAME')
 
-currentDate = datetime.date.today() #datetime.date(2021, 1, 5) ## date of today instead?
+currentDate = datetime.date.today() # + datetime.timedelta(days=1) #datetime.date(2021, 1, 5) ## date of today instead?
 yesterDate = datetime.date.today() - datetime.timedelta(days=1)
 
 def UpdateRefreshToken(TOKEN_DICT):
   print("Updating Tokens from Callback UpdateRefreshToken")
-  updated = db.user_tokens.find_one_and_update(
+  db.user_tokens.find_one_and_update(
     {"user": TOKEN_USER_NAME},
     { "$set": { 
       "ACCESS_TOKEN": TOKEN_DICT['access_token'],
