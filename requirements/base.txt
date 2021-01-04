@@ -2,3 +2,6 @@ python-dateutil>=1.5
 requests-oauthlib>=0.7
 fastapi>=0.63.0
 uvicorn[standard]>=0.13.3
+sshtunnel>=0.3.1
+configparser>=5.0.1
+pymongo==2.9.5
