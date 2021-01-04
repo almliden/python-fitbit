@@ -14,3 +14,8 @@ htmlcov
 
 # Editors
 .idea
+.vscode
+
+# Custom
+ignored
+config.ini

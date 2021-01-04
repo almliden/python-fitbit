@@ -47,3 +47,17 @@ To modify and test the library, you need to install the developer requirements:
 To run the library on a continuous integration server, you need to install the test requirements:
 
    sudo pip install -r requirements/test.txt
+
+
+Added functionality
+============
+
+Sync data from API to database:
+
+`python getFitbitData.py`
+
+(does require a token, run then gather-keys first to aquire access and refresh-tokens)
+
+The data is exposed through an API. To run the webserver:
+
+`uvicorn server:app --reload`
