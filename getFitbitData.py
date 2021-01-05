@@ -1,17 +1,8 @@
-from sshtunnel import SSHTunnelForwarder
-import pymongo
-import pprint
 import configparser
 import datetime
 import sys
 import os
-import gather_keys_oauth2 as Oauth2
 import fitbit
-import json
-from bson import BSON
-from bson import json_util
-from bson.json_util import dumps, loads
-from types import SimpleNamespace
 from databaseConnection import DatabaseConnection, DatabaseConfigurator
 
 parser=configparser.ConfigParser()
@@ -26,7 +17,6 @@ CLIENT_SECRET=parser.get('Login Parameters', 'CLIENT_SECRET')
 TOKEN_USER_NAME=parser.get('User', 'TOKEN_USER_NAME')
 
 def UpdateRefreshToken(token):
-  print("Updating Tokens from Callback UpdateRefreshToken")
   db.user_tokens.find_one_and_update(
     {"user": TOKEN_USER_NAME},
     { "$set": { 
@@ -69,7 +59,7 @@ def getHeartForDate(currentDate, fitbitClient, database):
   def getFromApi():
     oneDayData_heart = fitbitClient.intraday_time_series('activities/heart', base_date=date, detail_level='1sec')
     if (len(oneDayData_heart['activities-heart']) > 0):
-      database.heart.insert_one(oneDayData_heart)
+      database.test.insert_one(oneDayData_heart)
       print("Saved heart data")
     else:
       print("No heart data available")
