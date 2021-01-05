@@ -19,3 +19,4 @@ htmlcov
 # Custom
 ignored
 config.ini
+.python-version
