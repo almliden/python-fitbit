@@ -98,7 +98,7 @@ getSleepForDate(currentDate, auth2_client, db)
 
 yesterDate = datetime.date.today() - datetime.timedelta(days=1)
 getHeartForDate(yesterDate, auth2_client, db)
-getStepsForDate(currentDate, auth2_client, db)
+getStepsForDate(yesterDate, auth2_client, db)
 
 def getDates(startDate, endDate):
   start = datetime.datetime.fromisoformat(startDate)
