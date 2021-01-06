@@ -59,7 +59,7 @@ def getHeartForDate(currentDate, fitbitClient, database):
   def getFromApi():
     oneDayData_heart = fitbitClient.intraday_time_series('activities/heart', base_date=date, detail_level='1sec')
     if (len(oneDayData_heart['activities-heart']) > 0):
-      database.test.insert_one(oneDayData_heart)
+      database.heart.insert_one(oneDayData_heart)
       print("Saved heart data")
     else:
       print("No heart data available")
