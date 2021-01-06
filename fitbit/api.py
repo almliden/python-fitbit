@@ -74,7 +74,7 @@ class FitbitOauth2Client(object):
                 if d['errors'][0]['errorType'] == 'expired_token':
                     self.refresh_token()
                     response = self.session.request(method, url, **kwargs)
-
+                    
             return response
         except requests.Timeout as e:
             raise exceptions.Timeout(*e.args)
@@ -216,6 +216,7 @@ class Fitbit(object):
         Fitbit(<id>, <secret>, access_token=<token>, refresh_token=<token>)
         """
         self.system = system
+        self._rateLimits = {  }
         self.client = FitbitOauth2Client(
             client_id,
             client_secret,
@@ -244,6 +245,9 @@ class Fitbit(object):
             setattr(self, '%s_activities' % qualifier, curry(self.activity_stats, qualifier=qualifier))
             setattr(self, '%s_foods' % qualifier, curry(self._food_stats,
                                                         qualifier=qualifier))
+    
+    def get_rate_limits(self):
+        return self._rateLimits
 
     def make_request(self, *args, **kwargs):
         # This should handle data level errors, improper requests, and bad
@@ -254,6 +258,14 @@ class Fitbit(object):
 
         method = kwargs.get('method', 'POST' if 'data' in kwargs else 'GET')
         response = self.client.make_request(*args, **kwargs)
+
+        try:
+            self._rateLimits['fitbitRateLimitLimit'] = response.headers.get('Fitbit-Rate-Limit-Limit')
+            self._rateLimits['fitbitRateLimitRemaining'] = response.headers.get('Fitbit-Rate-Limit-Remaining')
+            self._rateLimits['fitbitRateLimitReset'] = response.headers.get('Fitbit-Rate-Limit-Reset')
+        except:
+            ## TODO: remove?
+            print("Could not get rate limit headers")
 
         if response.status_code == 202:
             return True
