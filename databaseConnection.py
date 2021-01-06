@@ -32,7 +32,10 @@ class DatabaseConnection:
     self.client = pymongo.MongoClient(self.databaseConfig.REMOTE_BIND_ADDRESS, self.server.local_bind_port)
     database = database if database != None else self.databaseConfig.MONGO_DB
     self.db = self.client[database]
-    self.db.authenticate(self.databaseConfig.MONGO_USER, self.databaseConfig.MONGO_PASS)
+    try:
+      self.db.authenticate(self.databaseConfig.MONGO_USER, self.databaseConfig.MONGO_PASS)
+    except (pymongo.errors.OperationFailure):
+      print("Could not authenticate against %s", database)
     return self.db
 
   def __del__(self):

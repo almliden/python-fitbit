@@ -32,10 +32,13 @@ def UpdateRefreshToken(token):
   )
 
 token = db.user_tokens.find_one({"user": TOKEN_USER_NAME})
-try:
-  auth2_client=fitbit.Fitbit(CLIENT_ID,CLIENT_SECRET,oauth2=True,access_token=token['access_token'],refresh_token=token['refresh_token'],expires_at=token['expires_at'],refresh_cb=UpdateRefreshToken)
-except (TypeError) as e:
-  print("Catched error: %s" % (e))
+if (token != None and token['access_token'] != None and token['refresh_token'] and token['expires_at']):
+  try:
+    auth2_client=fitbit.Fitbit(CLIENT_ID,CLIENT_SECRET,oauth2=True,access_token=token['access_token'],refresh_token=token['refresh_token'],expires_at=token['expires_at'],refresh_cb=UpdateRefreshToken)
+  except (TypeError) as e:
+    print("Catched error: %s. \n This is probably related to the user not present in the db" % (e))
+else:
+  raise Exception( ("User does not exist: %s" % TOKEN_USER_NAME))
 
 def getSleepForDate(currentDate, fitbitClient, database):
   date = currentDate.isoformat()
@@ -65,6 +68,20 @@ def getHeartForDate(currentDate, fitbitClient, database):
       print("No heart data available")
   performRequest(checkIfAlreadySaved, getFromApi, "heart", date)
 
+def getStepsForDate(currentDate, fitbitClient, database):
+  date = currentDate.isoformat()
+  def checkIfAlreadySaved():
+    dateadded_steps = database.steps.find({"activities-steps.dateTime": date})
+    return list(dateadded_steps)
+  def getFromApi():
+    oneDayData_steps = fitbitClient.intraday_time_series('activities/steps', base_date=date, detail_level='1min')
+    if (len(oneDayData_steps['activities-steps']) > 0):
+      database.steps.insert_one(oneDayData_steps)
+      print("Saved steps data")
+    else:
+      print("No heart data available")
+  performRequest(checkIfAlreadySaved, getFromApi, "steps", date)
+
 def performRequest(checkExisting, getFromApi, name, date):
   result = checkExisting()
   if len(result) == 0:
@@ -81,6 +98,7 @@ getSleepForDate(currentDate, auth2_client, db)
 
 yesterDate = datetime.date.today() - datetime.timedelta(days=1)
 getHeartForDate(yesterDate, auth2_client, db)
+getStepsForDate(currentDate, auth2_client, db)
 
 dbcontext.disconnect()
 
