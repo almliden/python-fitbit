@@ -79,7 +79,7 @@ def getStepsForDate(currentDate, fitbitClient, database):
       database.steps.insert_one(oneDayData_steps)
       print("Saved steps data")
     else:
-      print("No heart data available")
+      print("No step data available")
   performRequest(checkIfAlreadySaved, getFromApi, "steps", date)
 
 def performRequest(checkExisting, getFromApi, name, date):
