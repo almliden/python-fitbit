@@ -31,6 +31,8 @@ class DatabaseConnection:
     self.server.start()
     self.client = pymongo.MongoClient(self.databaseConfig.REMOTE_BIND_ADDRESS, self.server.local_bind_port)
     database = database if database != None else self.databaseConfig.MONGO_DB
+    if (database == None):
+      raise Exception("You must provide a database name")
     self.db = self.client[database]
     try:
       self.db.authenticate(self.databaseConfig.MONGO_USER, self.databaseConfig.MONGO_PASS)
@@ -48,20 +50,22 @@ class DatabaseConnection:
 
 class DatabaseConfigurator:
   conf = DatabaseConfig
+  configName = None
 
   def __init__(self, configName='databaseConnectionConfig.ini'):
-    if not os.path.isfile(configName):
+    self.configName = configName
+
+  def Config(self):
+    if not os.path.isfile(self.configName):
       raise FileExistsError("Config file not found")
     parser=configparser.ConfigParser()
-    parser.read(configName)
+    parser.read(self.configName)
     self.conf.REMOTE_HOST=parser.get('SSH Credentials', 'REMOTE_HOST')
     self.conf.REMOTE_BIND_ADDRESS=parser.get('SSH Credentials', 'REMOTE_BIND_ADDRESS')
     self.conf.REMOTE_BIND_PORT=int(parser.get('SSH Credentials', 'REMOTE_BIND_PORT'))
     self.conf.SSH_USER=parser.get('SSH Credentials', 'SSH_USER')
     self.conf.SSH_PASS=parser.get('SSH Credentials', 'SSH_PASS')
-    self.conf.MONGO_DB=parser.get('MongoDB Credentials', 'MONGO_DB')
-    self.conf.MONGO_USER=parser.get('MongoDB Credentials', 'MONGO_USER')
-    self.conf.MONGO_PASS=parser.get('MongoDB Credentials', 'MONGO_PASS')
-  
-  def Config(self):
+    self.conf.MONGO_DB=parser.get('MongoDB Credentials', 'MONGO_DB', fallback=None)
+    self.conf.MONGO_USER=parser.get('MongoDB Credentials', 'MONGO_USER', fallback=None)
+    self.conf.MONGO_PASS=parser.get('MongoDB Credentials', 'MONGO_PASS', fallback=None)
     return self.conf
