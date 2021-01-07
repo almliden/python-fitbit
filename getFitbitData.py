@@ -59,6 +59,9 @@ def getDistanceForDate(date, fitbitClient, database):
 def getElevationForDate(date, fitbitClient, database):
   requestWrapper(date, fitbitClient, database, collection='elevation', search={ 'KEY': 'activities-elevation.dateTime', 'VALUE': date }, endpoint = 'activities/tracker/elevation', detail_level='1min', check='activities-elevation')
 
+def getTestDataOnlyForRequest(date, fitbitClient, database):
+  requestWrapper(date, fitbitClient, database, collection='testCollection', search={ 'KEY': 'spanish inquisition', 'VALUE': 'noby expects' }, endpoint = 'activities/calories', detail_level='15min', check='activities-calories')
+
 def requestWrapper(date, fitbitClient, database, collection, search, endpoint, detail_level, check):
   def checkExisting(): return checkIfAlreadySaved(database, collection, search )
   def getFromApi(): return getIntraDayTimeSeries(fitbitClient, database, endpoint = endpoint, date = date, detail_level=detail_level, check=check, collection=collection)
@@ -73,23 +76,27 @@ def saveToDatabase(timeSeries, check, database, collection):
 
 def getIntraDayTimeSeries(fitbitClient, database, endpoint, date, detail_level, check, collection):
   timeSeries = fitbitClient.intraday_time_series(endpoint, base_date=date, detail_level=detail_level)
-  handleRateLimits(fitbitClient)
   saveToDatabase(timeSeries=timeSeries, check=check, database=database, collection=collection)
 
 def handleRateLimits(fitbitClient):
-  fitbitRateLimitLimit = fitbitClient.get_rate_limits()['fitbitRateLimitLimit']
-  fitbitRateLimitRemaining = fitbitClient.get_rate_limits()['fitbitRateLimitRemaining']
-  fitbitRateLimitReset = fitbitClient.get_rate_limits()['fitbitRateLimitReset']
-  record = { 'key': 'ratelimit', 'fitbitRateLimitLimit': fitbitRateLimitLimit, 'fitbitRateLimitRemaining': fitbitRateLimitRemaining, 'fitbitRateLimitReset': fitbitRateLimitReset, 'updated': datetime.datetime.now() }
-  updated = db.requests.find_one_and_replace({ 'key': 'ratelimit' }, record)
-  if (updated == None):
-    db.requests.insert_one(record)
+  try:
+    fitbitRateLimitLimit = fitbitClient.get_rate_limits()['fitbitRateLimitLimit']
+    fitbitRateLimitRemaining = fitbitClient.get_rate_limits()['fitbitRateLimitRemaining']
+    fitbitRateLimitReset = fitbitClient.get_rate_limits()['fitbitRateLimitReset']
+    record = { 'key': 'ratelimit', 'fitbitRateLimitLimit': fitbitRateLimitLimit, 'fitbitRateLimitRemaining': fitbitRateLimitRemaining, 'fitbitRateLimitReset': fitbitRateLimitReset, 'updated': datetime.datetime.now() }
+    updated = db.requests.find_one_and_replace({ 'key': 'ratelimit' }, record)
+    if (updated == None):
+      db.requests.insert_one(record)
+  except (KeyError):
+    pass
 
 def printRateLimits():
   fitbitRateLimit = db.requests.find_one({ 'key': 'ratelimit' })
-  minutes = int(fitbitRateLimit['fitbitRateLimitReset'])/60
-  seconds = 60 - (minutes % 60)
-  print('FitBit API: %s requests remains of %s. Resets in %s seconds (%d minutes %d seconds).' % (fitbitRateLimit['fitbitRateLimitRemaining'], fitbitRateLimit['fitbitRateLimitLimit'], fitbitRateLimit['fitbitRateLimitReset'], minutes, seconds))
+  # minutes = int(fitbitRateLimit['fitbitRateLimitReset'])/60
+  # seconds = 60 - (minutes % 60)
+  lastUpdated = fitbitRateLimit['updated']
+  resetsAt = lastUpdated + datetime.timedelta(seconds=int(fitbitRateLimit['fitbitRateLimitReset']))
+  print('FitBit API: %s requests remains of %s. Resets at %s. (Last request made: %s)'  % (fitbitRateLimit['fitbitRateLimitRemaining'], fitbitRateLimit['fitbitRateLimitLimit'], resetsAt, lastUpdated))
 
 def checkIfAlreadySaved(database, collection, search): return list(database[collection].find({ search['KEY'] : search['VALUE'] }))
 
@@ -99,8 +106,8 @@ def performRequest(checkExisting, getFromApi, name, date):
     try:
       print('Fetching: %s %s' % (name, date))
       getFromApi()
-    except (Exception) as e:
-      print (e)
+    except (Exception):
+      print ('Error fetching')
   else:
     print('Already stored: %s %s' % (name, date))
 
@@ -111,7 +118,8 @@ getSleepForDate(currentDate, auth2_client, db)
 getHeartForDate(yesterDate.isoformat(), auth2_client, db)
 getStepsForDate(yesterDate.isoformat(), auth2_client, db)
 getDistanceForDate(yesterDate.isoformat(), auth2_client, db)
-
+# getTestDataOnlyForRequest(yesterDate.isoformat(), auth2_client, db)
+handleRateLimits(auth2_client)
 printRateLimits()
 
 def getDates(startDate, endDate):
