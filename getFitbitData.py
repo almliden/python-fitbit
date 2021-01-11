@@ -1,9 +1,14 @@
 import configparser
 import datetime
+import time
 import sys
 import os
 import fitbit
 from databaseConnection import DatabaseConnection, DatabaseConfigurator
+from bson.json_util import dumps, loads
+from sender import EmailSender
+
+#Create a class out of this file instead
 
 parser=configparser.ConfigParser()
 parser.read('config.ini')
@@ -84,7 +89,7 @@ def handleRateLimits(fitbitClient):
     fitbitRateLimitRemaining = fitbitClient.get_rate_limits()['fitbitRateLimitRemaining']
     fitbitRateLimitReset = fitbitClient.get_rate_limits()['fitbitRateLimitReset']
     record = { 'key': 'ratelimit', 'fitbitRateLimitLimit': fitbitRateLimitLimit, 'fitbitRateLimitRemaining': fitbitRateLimitRemaining, 'fitbitRateLimitReset': fitbitRateLimitReset, 'updated': datetime.datetime.now() }
-    updated = db.requests.find_one_and_replace({ 'key': 'ratelimit' }, record)
+    updated = db.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
     if (updated == None):
       db.requests.insert_one(record)
   except (KeyError):
@@ -92,8 +97,6 @@ def handleRateLimits(fitbitClient):
 
 def printRateLimits():
   fitbitRateLimit = db.requests.find_one({ 'key': 'ratelimit' })
-  # minutes = int(fitbitRateLimit['fitbitRateLimitReset'])/60
-  # seconds = 60 - (minutes % 60)
   lastUpdated = fitbitRateLimit['updated']
   resetsAt = lastUpdated + datetime.timedelta(seconds=int(fitbitRateLimit['fitbitRateLimitReset']))
   print('FitBit API: %s requests remains of %s. Resets at %s. (Last request made: %s)'  % (fitbitRateLimit['fitbitRateLimitRemaining'], fitbitRateLimit['fitbitRateLimitLimit'], resetsAt, lastUpdated))
@@ -111,7 +114,7 @@ def performRequest(checkExisting, getFromApi, name, date):
   else:
     print('Already stored: %s %s' % (name, date))
 
-currentDate = datetime.date.today() ## + datetime.timedelta(days=1) #datetime.date(2021, 1, 5)
+currentDate = datetime.date.today()
 yesterDate = datetime.date.today() - datetime.timedelta(days=1)
 
 getSleepForDate(currentDate, auth2_client, db)
@@ -119,22 +122,15 @@ getHeartForDate(yesterDate.isoformat(), auth2_client, db)
 getStepsForDate(yesterDate.isoformat(), auth2_client, db)
 getDistanceForDate(yesterDate.isoformat(), auth2_client, db)
 # getTestDataOnlyForRequest(yesterDate.isoformat(), auth2_client, db)
+time.sleep(3)
 handleRateLimits(auth2_client)
 printRateLimits()
 
-def getDates(startDate, endDate):
-  start = datetime.datetime.fromisoformat(startDate)
-  end = datetime.datetime.fromisoformat(endDate)
-  timedelta = end - start
-  days = int(timedelta.total_seconds()/3600/24)+1
-  date_list = [datetime.datetime.isoformat(end - datetime.timedelta(days=x))[0:10] for x in reversed(range(days)) ]
-  return date_list
+sendEmailUpdate(db)
 
-## Move out to some helper or utility class to sync historic data
-# dates = getDates('2021-01-01', '2021-01-04')
-# for date in dates:
-#   dateToGet = datetime.date.fromisoformat(date)
-#   getStepsForDate(dateToGet, auth2_client, db)
+def sendEmailUpdate(database):
+  sender = EmailSender()
+  sender.analyse(database)
 
 dbcontext.disconnect()
 

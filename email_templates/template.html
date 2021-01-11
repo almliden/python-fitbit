@@ -1,0 +1,329 @@
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <title>{title}</title>
+  <style type="text/css">
+    body {{
+      margin: 0;
+      padding: 0;
+      min-width: 100% !important;
+    }}
+
+    .content {{
+      width: 100%;
+      max-width: 600px;
+      font-family: sans-serif;
+    }}
+
+    .header {{
+      padding: 10px 30px 10px 30px;
+    }}
+
+    .subhead {{
+      font-size: 12px;
+      color: #ffffff;
+      font-family: sans-serif;
+      letter-spacing: 10px;
+    }}
+
+    .h1 {{
+      font-size: 25px;
+      line-height: 30px;
+      font-weight: bold;
+    }}
+
+    .h1,
+    .h2,
+    .bodycopy {{
+      color: #a1a1a1;
+      font-family: sans-serif;
+    }}
+
+    .innerpadding {{
+      padding: 20px 20px 20px 20px;
+    }}
+
+    .borderbottom {{
+      border-bottom: 1px solid #353535;
+    }}
+
+    .h2 {{
+      padding: 0 0 15px 0;
+      font-size: 18px;
+      line-height: 20px;
+      font-weight: bold;
+    }}
+
+    .bodycopy {{
+      font-size: 14px;
+      line-height: 18px;
+    }}
+
+    .button {{
+      text-align: center;
+      font-size: 18px;
+      font-family: sans-serif;
+      font-weight: bold;
+      padding: 0 30px 0 30px;
+    }}
+
+    .button a {{
+      color: #ffffff;
+      text-decoration: none;
+    }}
+
+    img {{
+      height: auto;
+    }}
+
+    .footer {{
+      padding: 20px 30px 15px 30px;
+    }}
+
+    .footercopy {{
+      font-family: sans-serif;
+      font-size: 14px;
+      color: #ffffff;
+    }}
+
+    .footercopy a {{
+      color: #ffffff;
+      text-decoration: underline;
+    }}
+
+    @media only screen and (max-width: 550px),
+    screen and (max-device-width: 550px) {{
+      body[yahoo] .buttonwrapper {{
+        background-color: transparent !important;
+      }}
+
+      body[yahoo] .button a {{
+        background-color: #e05443;
+        padding: 15px 15px 13px !important;
+        display: block !important;
+      }}
+    }}
+
+    /* For yahoo! body[yahoo] .class {{}} */
+  </style>
+  <style type="text/css">
+    @media only screen and (min-device-width: 601px) {{
+      .content {{
+        width: 600px !important;
+      }}
+    }}
+
+    @media only screen and (min-device-width: 601px) {{
+      .content {{
+        width: 600px !important;
+      }}
+
+      .col425 {{
+        width: 425px !important;
+      }}
+
+      .col380 {{
+        width: 380px !important;
+      }}
+    }}
+  </style>
+</head>
+
+<body yahoo bgcolor="#303030">
+  <table width="100%" bgcolor="#303030" border="0" cellpadding="0" cellspacing="0">
+    <tr>
+      <td>
+        <!--[if (gte mso 9)|(IE)]>
+          <table width="600" align="center" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td>
+                <![endif]-->
+        <table class="content" align="center" cellpadding="0" cellspacing="0" border="0">
+          <tr>
+            <td class="header" bgcolor="#222">
+
+              <!-- can be removed -->
+              <!-- <table width="70" align="left" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td height="70" style="padding: 0 20px 20px 0;">
+                    <img src="images/icon.gif" width="70" height="70" border="0" alt="" />
+                  </td>
+                </tr>
+              </table> -->
+
+              <!--[if mso]>
+                 </td><td>
+              <![endif]-->
+
+              <!--[if (gte mso 9)|(IE)]>
+                <table width="425" align="left" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td>
+                    <![endif]-->
+              <table class="col425" align="left" border="0" cellpadding="0" cellspacing="0"
+                style="width: 100%; max-width: 425px;">
+                <tr>
+                  <td height="70">
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td class="subhead" style="padding: 0 0 0 3px;">
+                          DAILY REPORT
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="h1" style="padding: 5px 0 0 0;">
+                          Your daily report {date}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+              <!--[if (gte mso 9)|(IE)]>
+                </td>
+              </tr>
+            </table>
+          <![endif]-->
+
+            </td>
+          </tr>
+
+          {sections}
+
+
+          <!-- text.html -->
+          <!-- <tr>
+            <td class="innerpadding borderbottom">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td class="h2">
+                    {{section_1_header}}
+                  </td>
+                </tr>
+                <tr>
+                  <td class="bodycopy">
+                    {{section_1_text}}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr> -->
+          
+
+          <!-- columns.html -->
+          <!-- 
+          <tr>
+            <td class="innerpadding borderbottom">
+              <table width="115" align="left" border="0" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td height="115" style="padding: 0 20px 20px 0;">
+                    <img src="images/article1.png" width="115" height="115" border="0" alt="" />
+                  </td>
+                </tr>
+              </table>
+
+              <!--[if (gte mso 9)|(IE)]>
+                <table width="380" align="left" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td>
+              <![endif]-->
+              <!--               
+              <table class="col380" align="left" border="0" cellpadding="0" cellspacing="0"
+                style="width: 100%; max-width: 380px;">
+                <tr>
+                  <td>
+                    <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td class="bodycopy">
+                          {{section_2_text}}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 20px 0 0 0;">
+                          <table class="buttonwrapper" bgcolor="#e05443" border="0" cellspacing="0" cellpadding="0">
+                            <tr>
+                              <td class="button" height="45">
+                                <a href="{{button_location}}">{{button_text}}</a>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table> -->
+              <!--[if (gte mso 9)|(IE)]>
+                    </td>
+                  </tr>
+              </table>
+              <![endif]-->
+            <!-- </td>
+          </tr> -->
+
+
+
+
+          <!-- image.html -->
+          <!-- <tr>
+            <td class="bodycopy innerpadding borderbottom">
+              <img src="images/large.png" width="100%" border="0" alt="" />
+            </td>
+          </tr> -->
+
+          
+          <!-- plainText.html -->
+          <!-- <tr>
+            <td class="bodycopy innerpadding borderbottom">
+              {{section_3_text}}
+            </td>
+          </tr> -->
+
+          <tr>
+            <td class="footer" bgcolor="#252525">
+              <table width="100%" border="0" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" class="footercopy">
+                    &reg;Almliden FitBitSync 2021<br />
+                    <a href="#">
+                      <font color="#ffffff">Visit webpage</font>
+                    </a>
+                  </td>
+                </tr>
+                <!-- <tr>
+                  <td align="center" style="padding: 20px 0 0 0;">
+                    <table border="0" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td width="37" style="text-align: center; padding: 0 10px 0 10px;">
+                          <a href="some link somewhere">
+                            <img src="images/some-logo.png" width="37" height="37" alt="somewhere" border="0" />
+                          </a>
+                        </td>
+                        <td width="37" style="text-align: center; padding: 0 10px 0 10px;">
+                          <a href="some other link somewhere">
+                            <img src="images/some-other-logo.png" width="37" height="37" alt="someone" border="0" />
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr> -->
+              </table>
+            </td>
+          </tr>
+
+        </table>
+        <!--[if (gte mso 9)|(IE)]>
+              </td>
+            </tr>
+          </table>
+        <![endif]-->
+      </td>
+    </tr>
+  </table>
+</body>
+
+</html>
