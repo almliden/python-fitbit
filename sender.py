@@ -1,11 +1,21 @@
 from emailAdapter import EmailAdapter, EmailAdapterConfig, EmailAdapterConfigurator
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from databaseConnection import DatabaseConnection
 import configparser
+import random
 
 class EmailSender:
   emailAdapter = None
   database = None
+  valuephrases_steps = {
+    0 : ['Did you wear your fitbit?'],
+    1000: ['Hungover?'],
+    5000: ['Seems like you took a stroll!'],
+    8000: ['Good! You reached your goals!'],
+    9000: ['Over 9000!'],
+    10000: ['Congratulations!'],
+    15000: ['Magnificent ya filthy health-freak!', 'That\'s really good!', 'Keep it up maestro!']
+  }
 
   def __init__(self):
     config = EmailAdapterConfigurator()
@@ -23,18 +33,21 @@ class EmailSender:
     today = date.today().isoformat()
     sentEmails= self.database.emails.find_one({'date': today, 'category': 'daily' })
     if (sentEmails != None):
-      return
-    queuedAt = datetime.datetime.now().isoformat()
+      # return
+      print('Already sent')
+    queuedAt = datetime.now().isoformat()
     self.createIntentToSend(queuedAt)
     emailParts = {}
-    emailParts['restingHeartRate'] = self.addHeartRate()
-    sentAt = datetime.datetime.now().isoformat()
+    yesterDate = date.today() - timedelta(days=1)
+    emailParts['restingHeartRate'] = self.addHeartRate(yesterDate)
+    emailParts['steps'] = self.addSteps(yesterDate)
+    sentAt = datetime.now().isoformat()
     self.send(emailParts)
     self.confirmEmailSent(queuedAt, sentAt)
     
   def createIntentToSend(self, queuedAt: str):
     try:
-      self.database.emails.insert_one({ 'date': datetime.date.today().isoformat(), 'category': 'daily', 'queuedAt': queuedAt, 'sent': False })
+      self.database.emails.insert_one({ 'date': date.today().isoformat(), 'category': 'daily', 'queuedAt': queuedAt, 'sent': False })
     except (Exception):
       print('Exception in createIntentToSend')
   
@@ -44,16 +57,38 @@ class EmailSender:
     except (Exception):
       print('Exception in confirmEmailSent')
 
-  def addHeartRate(self):
-    yesterDate = datetime.date.today() - datetime.timedelta(days=1)
+  def addHeartRate(self, search_date:date):
     try:
-      yesterdate_heart = self.database.heart.find_one({'activities-heart.dateTime' : yesterDate.isoformat() })
+      yesterdate_heart = self.database.heart.find_one({'activities-heart.dateTime' : search_date.isoformat() })
       heartRate = yesterdate_heart['activities-heart'][0]['value']['restingHeartRate']
       if (heartRate != None):
-        with open('./email_templates/plainText.html', 'r', -1) as fopen:
-          return (fopen.read().format(section_text = 'Resting heart rate: %d' % int(heartRate)))
-    except:
+        with open('{folderPath}/restingHeartRate.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+          return fopen.read().format(section_text = 'This was your resting heart rate.', section_number = heartRate)
+    except (Exception):
       print('Something went wrong in def addHeartRate')
+      return ''
+  
+  def addSteps(self, search_date:date):
+    try:
+      data = self.database.steps.find_one({'activities-steps.dateTime' : search_date.isoformat() })
+      steps = data['activities-steps'][0]['value']
+      if (steps != None):
+        keys = self.valuephrases_steps.keys()
+        phraseKey = 0
+        for k in keys:
+          if int(steps) > k:
+            phraseKey = k 
+          elif k > phraseKey:
+            break
+        possiblePhrases = self.valuephrases_steps[phraseKey]
+        phraseIndex = random.randrange(0, len(possiblePhrases))
+        selectedPhrase = possiblePhrases[phraseIndex]
+        with open('{folderPath}/totalSteps.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+          return fopen.read().format(section_text = 'You took this many steps. %s The recommended number of steps per day is 10 000, but we settle for 8000 to keep our goals reasonable.' % selectedPhrase, section_number = steps)
+    except (Exception) as e:
+      print(e)
+      print('Something went wrong in def addSteps')
+      return ''
       
   def send(self, sections: dict):
     sections_content = ''
