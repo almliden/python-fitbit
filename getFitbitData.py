@@ -114,6 +114,10 @@ def performRequest(checkExisting, getFromApi, name, date):
   else:
     print('Already stored: %s %s' % (name, date))
 
+def sendEmailUpdate(database):
+  sender = EmailSender()
+  sender.analyse(database)
+
 currentDate = datetime.date.today()
 yesterDate = datetime.date.today() - datetime.timedelta(days=1)
 
@@ -127,10 +131,6 @@ handleRateLimits(auth2_client)
 printRateLimits()
 
 sendEmailUpdate(db)
-
-def sendEmailUpdate(database):
-  sender = EmailSender()
-  sender.analyse(database)
 
 dbcontext.disconnect()
 

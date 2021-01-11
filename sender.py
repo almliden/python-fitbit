@@ -12,10 +12,11 @@ class EmailSender:
     self.emailAdapter = EmailAdapter(config.Config())
     parser=configparser.ConfigParser()
     parser.read('config.ini')
-    self.sender=parser.get('Email Daily Healt Report', 'EMAIL_DAILY_HEALTH_REPORT_SENDER')
-    self.receiver=parser.get('Email Daily Healt Report', 'EMAIL_DAILY_HEALTH_REPORT_RECEIVER')
-    self.buttonHref=parser.get('Email Daily Healt Report', 'EMAIL_DAILY_HEALTH_REPORT_LINK')
-    self.template_file_name=parser.get('Email Daily Healt Report', 'EMAIL_DAILY_HEALTH_TEMPLATE')
+    self.sender=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_SENDER')
+    self.receiver=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_RECEIVER')
+    self.buttonHref=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_LINK')
+    self.template_file_name=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE')
+    self.template_folder=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE_FOLDER')
 
   def analyse(self, database: DatabaseConnection):
     self.database = database
