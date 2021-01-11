@@ -41,6 +41,7 @@ class EmailSender:
     yesterDate = date.today() - timedelta(days=1)
     emailParts['restingHeartRate'] = self.addHeartRate(yesterDate)
     emailParts['steps'] = self.addSteps(yesterDate)
+    emailParts['distance'] = self.addDistance(yesterDate)
     sentAt = datetime.now().isoformat()
     self.send(emailParts)
     self.confirmEmailSent(queuedAt, sentAt)
@@ -68,6 +69,17 @@ class EmailSender:
       print('Something went wrong in def addHeartRate')
       return ''
   
+  def addDistance(self, search_date:date):
+    try:
+      data = self.database.distance.find_one({'activities-distance.dateTime' : search_date.isoformat() })
+      distance = data['activities-distance'][0]['value']
+      if (distance != None):
+        with open('{folderPath}/distance.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+          return fopen.read().format(section_text = 'This is your calculated distance.', section_number = round(float(distance), 3))
+    except (Exception):
+      print('Something went wrong in def addDistance')
+      return ''
+
   def addSteps(self, search_date:date):
     try:
       data = self.database.steps.find_one({'activities-steps.dateTime' : search_date.isoformat() })

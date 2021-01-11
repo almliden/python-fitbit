@@ -126,7 +126,7 @@ getHeartForDate(yesterDate.isoformat(), auth2_client, db)
 getStepsForDate(yesterDate.isoformat(), auth2_client, db)
 getDistanceForDate(yesterDate.isoformat(), auth2_client, db)
 # getTestDataOnlyForRequest(yesterDate.isoformat(), auth2_client, db)
-time.sleep(3)
+time.sleep(1)
 handleRateLimits(auth2_client)
 printRateLimits()
 
