@@ -33,8 +33,8 @@ class EmailSender:
     today = date.today().isoformat()
     sentEmails= self.database.emails.find_one({'date': today, 'category': 'daily' })
     if (sentEmails != None):
-      # return
-      print('Already sent')
+      print('Already sent email: %s' % today)
+      return
     queuedAt = datetime.now().isoformat()
     self.createIntentToSend(queuedAt)
     emailParts = {}
