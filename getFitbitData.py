@@ -128,12 +128,11 @@ getDistanceForDate(yesterDate.isoformat(), auth2_client, db)
 time.sleep(1)
 handleRateLimits(auth2_client)
 printRateLimits()
-
 sendEmailUpdate(db, override_check = False)
 
 # Debug
 # getTestDataOnlyForRequest(yesterDate.isoformat(), auth2_client, db)
-sendEmailUpdate(db, override_check = True)
+# sendEmailUpdate(db, override_check = True)
 
 dbcontext.disconnect()
 

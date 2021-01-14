@@ -28,6 +28,11 @@ class GeneratePreview:
       return fopen.read().format(section_text='Meditation sets the mood for the day. Do you have time to spare?',
          button_location=btnLocation, button_text='Take me there!')
 
+  def addYesterDaySleep(self, btnLocation):
+    with open('{folderPath}/meditate.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+      return fopen.read().format(section_text='Meditation sets the mood for the day. Do you have time to spare?',
+         button_location=btnLocation, button_text='Take me there!')
+
   def createPreview(self):
     today = date.today().isoformat()
     yesterDate = date.today() - timedelta(days=1)

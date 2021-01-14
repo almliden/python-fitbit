@@ -42,6 +42,7 @@ class EmailSender:
     emailParts['steps'] = self.addSteps(yesterDate)
     emailParts['distance'] = self.addDistance(yesterDate)
     emailParts['meditateNudge'] = self.addMeditate()
+    emailParts['sleepStatsYesterDay'] = self.addYesterDaySleep(yesterDate)
     sentAt = datetime.now().isoformat()
     self.send(emailParts)
     self.confirmEmailSent(queuedAt, sentAt)
@@ -108,6 +109,22 @@ class EmailSender:
         return fopen.read().format(section_text='Meditation sets the mood for the day. Do you have time to spare?', button_location='headspace://home', button_text='Take me there!')
     except (Exception):
       print('Something went wrong in def addMeditate')
+      return ''
+
+  def addYesterDaySleep(self,  search_date:date):
+    try:
+      data = self.database.sleep.find_one({'sleep.dateOfSleep' : search_date.isoformat() })
+      sleep_time_asleep_raw = data['sleep'][0]['startTime']
+      sleep_time_asleep = sleep_time_asleep_raw[11:][0:5]
+      sleep_duration_total = int(data['sleep'][0]['minutesAsleep'])
+      sleep_duration_hours = round(sleep_duration_total / 60, 0)
+      sleep_duration_minutes = sleep_duration_total % 60
+      sleep_duration = '{hours} hours and {minutes} minutes'.format(hours = sleep_duration_hours, minutes = sleep_duration_minutes)
+      if (sleep_time_asleep != None and sleep_duration != None):
+        with open('{folderPath}/sleep.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+          return fopen.read().format(sleep_time_asleep = sleep_time_asleep, sleep_duration = sleep_duration)
+    except (Exception):
+      print('Something went wrong in def addYesterDaySleep')
       return ''
 
   def send(self, sections: dict):
