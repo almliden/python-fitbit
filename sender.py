@@ -8,13 +8,12 @@ class EmailSender:
   emailAdapter = None
   database = None
   valuephrases_steps = {
-    0 : ['Did you wear your fitbit?'],
-    1000: ['Hungover?'],
-    5000: ['Seems like you took a stroll!'],
+    0 : ['Did you wear your fitbit?', 'I believe you can do better than this.', 'Hope you are well!'],
+    6000: ['Seems like you took a stroll!', 'Perhaps you can squeeze in some workout today?'],
     8000: ['Good! You reached your goals!'],
     9000: ['Over 9000!'],
-    10000: ['Congratulations!'],
-    15000: ['Magnificent ya filthy health-freak!', 'That\'s really good!', 'Keep it up maestro!']
+    10000: ['Congratulations!', '10k is not bad!'],
+    15000: ['Magnificent ya filthy health-freak!', 'That\'s really good!', 'Keep it up maestro!', 'Impressive!']
   }
 
   def __init__(self):
@@ -28,11 +27,11 @@ class EmailSender:
     self.template_file_name=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE')
     self.template_folder=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE_FOLDER')
 
-  def analyse(self, database: DatabaseConnection):
+  def analyse(self, database: DatabaseConnection, override_check:bool):
     self.database = database
     today = date.today().isoformat()
     sentEmails= self.database.emails.find_one({'date': today, 'category': 'daily' })
-    if (sentEmails != None):
+    if (sentEmails != None and not override_check):
       print('Already sent email: %s' % today)
       return
     queuedAt = datetime.now().isoformat()
@@ -42,6 +41,7 @@ class EmailSender:
     emailParts['restingHeartRate'] = self.addHeartRate(yesterDate)
     emailParts['steps'] = self.addSteps(yesterDate)
     emailParts['distance'] = self.addDistance(yesterDate)
+    emailParts['meditateNudge'] = self.addMeditate()
     sentAt = datetime.now().isoformat()
     self.send(emailParts)
     self.confirmEmailSent(queuedAt, sentAt)
@@ -101,7 +101,15 @@ class EmailSender:
       print(e)
       print('Something went wrong in def addSteps')
       return ''
-      
+
+  def addMeditate(self):
+    try:
+      with open('{folderPath}/meditate.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+        return fopen.read().format(section_text='Meditation sets the mood for the day. Do you have time to spare?', button_location='headspace://home', button_text='Take me there!')
+    except (Exception):
+      print('Something went wrong in def addMeditate')
+      return ''
+
   def send(self, sections: dict):
     sections_content = ''
 

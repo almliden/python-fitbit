@@ -114,9 +114,9 @@ def performRequest(checkExisting, getFromApi, name, date):
   else:
     print('Already stored: %s %s' % (name, date))
 
-def sendEmailUpdate(database):
+def sendEmailUpdate(database, override_check = False):
   sender = EmailSender()
-  sender.analyse(database)
+  sender.analyse(database, override_check)
 
 currentDate = datetime.date.today()
 yesterDate = datetime.date.today() - datetime.timedelta(days=1)
@@ -125,12 +125,15 @@ getSleepForDate(currentDate, auth2_client, db)
 getHeartForDate(yesterDate.isoformat(), auth2_client, db)
 getStepsForDate(yesterDate.isoformat(), auth2_client, db)
 getDistanceForDate(yesterDate.isoformat(), auth2_client, db)
-# getTestDataOnlyForRequest(yesterDate.isoformat(), auth2_client, db)
 time.sleep(1)
 handleRateLimits(auth2_client)
 printRateLimits()
 
-sendEmailUpdate(db)
+sendEmailUpdate(db, override_check = False)
+
+# Debug
+# getTestDataOnlyForRequest(yesterDate.isoformat(), auth2_client, db)
+sendEmailUpdate(db, override_check = True)
 
 dbcontext.disconnect()
 
