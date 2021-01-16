@@ -20,6 +20,7 @@ db = dbcontext.connect()
 CLIENT_ID=parser.get('Login Parameters', 'CLIENT_ID')
 CLIENT_SECRET=parser.get('Login Parameters', 'CLIENT_SECRET')
 TOKEN_USER_NAME=parser.get('User', 'TOKEN_USER_NAME')
+DEVICE_ID=parser.get('User', 'DEVICE_ID')
 
 def UpdateRefreshToken(token):
   db.user_tokens.find_one_and_update(
@@ -126,22 +127,34 @@ def performRequest(checkExisting, getFromApi, name, date):
   else:
     print('Already stored: %s %s' % (name, date))
 
-def sendEmailUpdate(database, override_check = False):
+def sendEmailUpdate(database, device_id, override_check = False):
   sender = EmailSender()
-  sender.analyse(database, override_check)
+  sender.analyse(database, override_check, device_id)
+
+def getLastSyncedFromDb(db, deviceId):
+  result = db.devices.find_one({'devices.id': deviceId }, { 'devices.batteryLevel': 1, 'devices.lastSyncTime': 1 } )
+  if (result != None):
+    return result['devices'][0]
+  return {}
+
 
 currentDate = datetime.date.today()
 yesterDate = datetime.date.today() - datetime.timedelta(days=1)
 
 getSleepForDate(currentDate, auth2_client, db)
-getHeartForDate(yesterDate.isoformat(), auth2_client, db)
-getStepsForDate(yesterDate.isoformat(), auth2_client, db)
-getDistanceForDate(yesterDate.isoformat(), auth2_client, db)
+
 getDevices(auth2_client, db)
+lastSyncTimeResult = getLastSyncedFromDb(db, DEVICE_ID)
+
+if (lastSyncTimeResult != None and datetime.date.fromisoformat(lastSyncTimeResult['lastSyncTime'][0:10]) > yesterDate ):
+  getHeartForDate(yesterDate.isoformat(), auth2_client, db)
+  getStepsForDate(yesterDate.isoformat(), auth2_client, db)
+  getDistanceForDate(yesterDate.isoformat(), auth2_client, db)
+  sendEmailUpdate(db, device_id=DEVICE_ID, override_check = False)
+
 time.sleep(1)
 handleRateLimits(auth2_client)
 printRateLimits()
-sendEmailUpdate(db, override_check = False)
 
 # Debug
 # getTestDataOnlyForRequest(yesterDate.isoformat(), auth2_client, db)

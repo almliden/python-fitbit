@@ -27,25 +27,37 @@ class EmailSender:
     self.template_file_name=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE')
     self.template_folder=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE_FOLDER')
 
-  def analyse(self, database: DatabaseConnection, override_check:bool):
-    self.database = database
-    today = date.today().isoformat()
-    sentEmails= self.database.emails.find_one({'date': today, 'category': 'daily' })
-    if (sentEmails != None and not override_check):
-      print('Already sent email: %s' % today)
-      return
-    queuedAt = datetime.now().isoformat()
-    self.createIntentToSend(queuedAt)
-    emailParts = {}
-    yesterDate = date.today() - timedelta(days=1)
-    emailParts['restingHeartRate'] = self.addHeartRate(yesterDate)
-    emailParts['steps'] = self.addSteps(yesterDate)
-    emailParts['distance'] = self.addDistance(yesterDate)
-    emailParts['meditateNudge'] = self.addMeditate()
-    emailParts['sleepStatsYesterDay'] = self.addYesterDaySleep(yesterDate)
-    sentAt = datetime.now().isoformat()
-    self.send(emailParts)
-    self.confirmEmailSent(queuedAt, sentAt)
+  def analyse(self, database: DatabaseConnection, override_check:bool, device_id:str):
+    try:
+      self.database = database
+      today = date.today().isoformat()
+      queuedAt = datetime.now().isoformat()
+      sentEmails= self.database.emails.find_one({'date': today, 'category': 'daily' })
+      if (sentEmails != None and bool(sentEmails['sent']) == True and not override_check):
+        print('Already sent email: %s' % today)
+        return
+      if (sentEmails == None):
+        self.createIntentToSend(queuedAt)
+      lastSyncTimeResult = self.getLastSyncedFromDb(database, device_id)
+      emailParts = {}
+      yesterDate = date.today() - timedelta(days=1)
+      emailParts['restingHeartRate'] = self.addHeartRate(yesterDate)
+      emailParts['steps'] = self.addSteps(yesterDate)
+      emailParts['distance'] = self.addDistance(yesterDate)
+      emailParts['meditateNudge'] = self.addMeditate()
+      emailParts['sleepStatsYesterDay'] = self.addYesterDaySleep(yesterDate)
+      emailParts['batteryLevel'] = self.addBatteryLevel(lastSyncTimeResult['batteryLevel'], lastSyncTimeResult['lastSyncTime'][0:19])
+      sentAt = datetime.now().isoformat()
+      self.send(emailParts)
+      self.confirmEmailSent(queuedAt, sentAt)
+    except (Exception):
+      print('Something went wrong in sending email.')
+  
+  def getLastSyncedFromDb(self, db, deviceId:str):
+    result = db.devices.find_one({'devices.id': deviceId }, { 'devices.batteryLevel': 1, 'devices.lastSyncTime': 1 } )
+    if (result != None):
+      return result['devices'][0]
+    return {}
     
   def createIntentToSend(self, queuedAt: str):
     try:
@@ -58,6 +70,17 @@ class EmailSender:
       self.database.emails.find_one_and_update({ 'queuedAt': queuedAt}, { '$set': { 'sent': True, 'sentAt': sentAt } })
     except (Exception):
       print('Exception in confirmEmailSent')
+
+  def addBatteryLevel(self, batteryLevel:int, last_synced:str):
+    try:
+      selected_text = 'Your trackers battery level.'
+      if (batteryLevel < 20):
+        selected_text += ' Kindly try to find some time to charge your device during the day.'
+      with open('{folderPath}/batteryLevel.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+        return fopen.read().format(section_text = selected_text, section_number = batteryLevel, last_synced = last_synced)
+    except (Exception):
+      print('Something went wrong in def addBatteryLevel')
+      return ''
 
   def addHeartRate(self, search_date:date):
     try:
@@ -110,7 +133,7 @@ class EmailSender:
     except (Exception):
       print('Something went wrong in def addMeditate')
       return ''
-
+  
   def addYesterDaySleep(self,  search_date:date):
     try:
       data = self.database.sleep.find_one({'sleep.dateOfSleep' : search_date.isoformat() })

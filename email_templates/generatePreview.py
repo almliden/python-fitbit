@@ -33,6 +33,17 @@ class GeneratePreview:
       return fopen.read().format(section_text='Meditation sets the mood for the day. Do you have time to spare?',
          button_location=btnLocation, button_text='Take me there!')
 
+  def addBatteryLevel(self, batteryLevel= 20):
+    try:
+      selected_text = 'Your trackers battery level.'
+      if (batteryLevel <= 20):
+        selected_text += ' Kindly try to find some time to charge your device during the day.'
+      with open('{folderPath}/batteryLevel.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+        return fopen.read().format(section_text = selected_text, section_number = batteryLevel)
+    except (Exception):
+      print('Something went wrong in def addBatteryLevel')
+      return ''
+
   def createPreview(self):
     today = date.today().isoformat()
     yesterDate = date.today() - timedelta(days=1)
@@ -42,6 +53,7 @@ class GeneratePreview:
     emailParts['distance'] = self.addDistance()
     # emailParts['addStepsHeartDistance'] = self.addStepsHeartDistance()
     emailParts['meditate2'] = self.addMeditate('headspace://home')
+    emailParts['batteryLevel'] = self.addBatteryLevel()
 
     sections_content = ''
     for key, value in emailParts.items():
