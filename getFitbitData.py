@@ -52,6 +52,18 @@ def getSleepForDate(date, fitbitClient, database):
     saveToDatabase(timeSeries=timeSeries, check='sleep', database=database, collection='sleep')
   performRequest(checkExisting, getFromApi, 'sleep', date.isoformat())
 
+def getDevices(fitbitClient, db):
+  all_devices = fitbitClient.get_devices()
+  devices = { 'devices': all_devices}
+  device_id = devices['devices'][0]['id']
+  updated = db.devices.find_one_and_update({ 'devices.id': device_id }, { '$set':  devices })
+  if (updated == None):
+    db.devices.insert_one(devices)
+  updated_record = { 'key': 'devicesRequest', 'lastDeviceRequest': datetime.datetime.now() }
+  updated_requests = db.requests.find_one_and_update({ 'key': 'devicesRequest'}, { '$set': updated_record })
+  if (updated_requests == None):
+    db.requests.insert_one(updated_record)
+
 def getHeartForDate(date, fitbitClient, database):
   requestWrapper(date, fitbitClient, database, collection='heart', search={ 'KEY': 'activities-heart.dateTime', 'VALUE': date }, endpoint = 'activities/heart', detail_level='1sec', check='activities-heart')
 
@@ -125,6 +137,7 @@ getSleepForDate(currentDate, auth2_client, db)
 getHeartForDate(yesterDate.isoformat(), auth2_client, db)
 getStepsForDate(yesterDate.isoformat(), auth2_client, db)
 getDistanceForDate(yesterDate.isoformat(), auth2_client, db)
+getDevices(auth2_client, db)
 time.sleep(1)
 handleRateLimits(auth2_client)
 printRateLimits()
