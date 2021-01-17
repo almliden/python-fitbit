@@ -18,7 +18,7 @@ class DatabaseConnection:
   db=None
   databaseConfig=DatabaseConfig
 
-  def __init__(self, databaseConfig):
+  def __init__(self, databaseConfig:DatabaseConfig):
     self.databaseConfig=databaseConfig
     self.server = SSHTunnelForwarder(
       ssh_address_or_host=self.databaseConfig.REMOTE_HOST,
