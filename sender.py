@@ -9,6 +9,7 @@ class EmailSender:
   database = None
   valuephrases_steps = {
     0 : ['Did you wear your fitbit?', 'I believe you can do better than this.', 'Hope you are well!'],
+    2000 : ['You should definitely try to get some steps today!'],
     6000: ['Seems like you took a stroll!', 'Perhaps you can squeeze in some workout today?'],
     8000: ['Good! You reached your goals!'],
     9000: ['Over 9000!'],
@@ -41,8 +42,8 @@ class EmailSender:
       lastSyncTimeResult = self.getLastSyncedFromDb(database, device_id)
       emailParts = {}
       yesterDate = date.today() - timedelta(days=1)
-      emailParts['restingHeartRate'] = self.addHeartRate(yesterDate)
       emailParts['steps'] = self.addSteps(yesterDate)
+      emailParts['restingHeartRate'] = self.addHeartRate(yesterDate)
       emailParts['distance'] = self.addDistance(yesterDate)
       emailParts['meditateNudge'] = self.addMeditate()
       emailParts['sleepStatsYesterDay'] = self.addYesterDaySleep(yesterDate)
