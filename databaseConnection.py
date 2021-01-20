@@ -46,7 +46,12 @@ class DatabaseConnection:
   def disconnect(self):
     if (self.client != None):
       self.client.disconnect()
-      self.server.stop()
+      try:
+        if (self.server != None):
+          self.server.close()
+          self.server.stop(force=True)
+      except:
+        pass
 
 class DatabaseConfigurator:
   conf = DatabaseConfig
