@@ -128,9 +128,8 @@ class ApiClient:
     time_series_saved = self.retrieve_one(collection, search)
     if (time_series_saved != None):
       if (len(time_series_api['activities-{collection}-intraday'.format(collection=collection)]['dataset']) > len(time_series_saved['activities-{collection}-intraday'.format(collection=collection)]['dataset'])):
-        updated = self.database[collection].find_one_and_update({ 'activities-{collection}.dateTime'.format(collection=collection): date }, { '$set': time_series_api })
-        if (self.logging): print('Updated %s' % (collection, len(time_series_api['activities-{collection}-intraday'.format(collection=collection)]['dataset']), len(time_series_saved['activities-{collection}-intraday'.format(collection=collection)]['dataset'])))
-        if (self.logging): print(updated['activities-heart'])
+        self.database[collection].find_one_and_update({ 'activities-{collection}.dateTime'.format(collection=collection): date }, { '$set': time_series_api })
+        if (self.logging): print('Updated %s %s old length: %s new length: %s' % (collection, date, len(time_series_api['activities-{collection}-intraday'.format(collection=collection)]['dataset']), len(time_series_saved['activities-{collection}-intraday'.format(collection=collection)]['dataset'])))
       elif (self.logging): print('Already saved latest %s %s' % (collection, date))
     elif (self.logging):
       print('Save new data %s %s' % (collection, date))
