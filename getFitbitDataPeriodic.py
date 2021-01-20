@@ -27,9 +27,24 @@ authorized_client = client.get_authorized_client(user_name=TOKEN_USER_NAME, clie
 api_client = ApiClient(authorized_client, database, logging_enabled=True)
 
 # Main
-current_date = datetime.date.today()
-yester_date = datetime.date.today() - datetime.timedelta(days=7)
-dates_to_check = helperFunctions.get_dates(yester_date, current_date)
+default_days_to_check = 7
+if (len(sys.argv) > 1):
+  try:
+    default_days_to_check = int(sys.argv[1])
+  except (ValueError):
+    print('Argument erroneous. Using default value: {default_days_to_check}.'.format(default_days_to_check=default_days_to_check))
+else:
+  print('No argument provided. Using default value: {default_days_to_check}.'.format(default_days_to_check=default_days_to_check))
+
+end_date = datetime.date.today()
+if (len(sys.argv) > 2):
+  try:
+    end_date = datetime.date.fromisoformat(sys.argv[2])
+  except (ValueError):
+    print('Argument erroneous. Using default value: {selected_date}.'.format(selected_date=end_date))
+
+start_date = end_date - datetime.timedelta(days=default_days_to_check)
+dates_to_check = helperFunctions.get_dates(start_date, end_date)
 
 for check_date in dates_to_check:
   api_client.update_heart(check_date)

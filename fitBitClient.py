@@ -132,7 +132,9 @@ class ApiClient:
         if (self.logging): print('Updated %s' % (collection, len(time_series_api['activities-{collection}-intraday'.format(collection=collection)]['dataset']), len(time_series_saved['activities-{collection}-intraday'.format(collection=collection)]['dataset'])))
         if (self.logging): print(updated['activities-heart'])
       elif (self.logging): print('Already saved latest %s %s' % (collection, date))
-    elif (self.logging): print('No data saved %s %s' % (collection, date))
+    elif (self.logging):
+      print('Save new data %s %s' % (collection, date))
+      self.save(time_series=time_series_api, check=check, collection=collection)
 
   def fetch_and_save_intraday(self, date:str, collection:str, search:dict, endpoint:str, detail_level:str, check:str):
     if (self.is_not_saved(collection, search, name=collection, date=date)):
@@ -142,24 +144,25 @@ class ApiClient:
     elif (self.logging): print('Already saved %s %s' % (collection, date))
 
   def handle_rate_limits(self):
-    try:
-      fitbit_rate_limit_limit = self.authorized_client.get_rate_limits()['fitbitRateLimitLimit']
-      fitbit_rate_limit_remaining = self.authorized_client.get_rate_limits()['fitbitRateLimitRemaining']
-      fitbit_rate_limit_reset = self.authorized_client.get_rate_limits()['fitbitRateLimitReset']
-      record = { 'key': 'ratelimit', 'fitbitRateLimitLimit': fitbit_rate_limit_limit, 'fitbitRateLimitRemaining': fitbit_rate_limit_remaining, 'fitbitRateLimitReset': fitbit_rate_limit_reset, 'updated': datetime.datetime.now() }
-      last_request = self.database.requests.find_one({ 'key': 'ratelimit' })
-      if (last_request == None):
-        self.database.requests.insert_one(record)
-        return
-      last_updated = last_request['updated']
-      resets_at = last_updated + datetime.timedelta(seconds=int(last_request['fitbitRateLimitReset']))
-      if (datetime.datetime.now() >= resets_at):
-        self.database.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
-      elif (int(last_request['fitbitRateLimitRemaining']) > int(fitbit_rate_limit_remaining)):
-        self.database.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
-    except (Exception):
-      print('Error in rate limit handling')
-      pass
+    if (self.authorized_client.get_rate_limits() != {}):
+      try:
+        fitbit_rate_limit_limit = self.authorized_client.get_rate_limits()['fitbitRateLimitLimit']
+        fitbit_rate_limit_remaining = self.authorized_client.get_rate_limits()['fitbitRateLimitRemaining']
+        fitbit_rate_limit_reset = self.authorized_client.get_rate_limits()['fitbitRateLimitReset']
+        record = { 'key': 'ratelimit', 'fitbitRateLimitLimit': fitbit_rate_limit_limit, 'fitbitRateLimitRemaining': fitbit_rate_limit_remaining, 'fitbitRateLimitReset': fitbit_rate_limit_reset, 'updated': datetime.datetime.now() }
+        last_request = self.database.requests.find_one({ 'key': 'ratelimit' })
+        if (last_request == None):
+          self.database.requests.insert_one(record)
+          return
+        last_updated = last_request['updated']
+        resets_at = last_updated + datetime.timedelta(seconds=int(last_request['fitbitRateLimitReset']))
+        if (datetime.datetime.now() >= resets_at):
+          self.database.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
+        elif (int(last_request['fitbitRateLimitRemaining']) > int(fitbit_rate_limit_remaining)):
+          self.database.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
+      except (Exception):
+        print('Error in rate limit handling')
+        pass
 
   def print_rate_limits(self):
     self.handle_rate_limits()
