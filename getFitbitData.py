@@ -46,8 +46,7 @@ if (last_sync_time_result != None and datetime.date.fromisoformat(last_sync_time
 api_client.print_rate_limits()
 
 # Debug
-# apiClient.getTestDataOnlyForRequest(yesterDate.isoformat(), auth2_client, db)
-# sendEmailUpdate(db, override_check = True)
+# send_email_update(database, device_id=DEVICE_ID, override_check = True)
 
 # Teardown
 del api_client

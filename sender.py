@@ -44,6 +44,7 @@ class EmailSender:
       yesterdate = date.today() - timedelta(days=1)
       email_parts['steps'] = self.add_steps(yesterdate)
       email_parts['restingHeartRate'] = self.add_heartrate(yesterdate)
+      email_parts['tip_of_the_day'] = self.add_tip_of_the_day()
       email_parts['distance'] = self.add_distance(yesterdate)
       email_parts['meditateNudge'] = self.add_meditate()
       email_parts['sleepStatsYesterDay'] = self.add_yesterday_sleep(yesterdate)
@@ -81,6 +82,20 @@ class EmailSender:
         return fopen.read().format(section_text = selected_text, section_number = battery_level, last_synced = last_synced)
     except (Exception):
       print('Something went wrong in def add_battery_level')
+      return ''
+
+  def add_tip_of_the_day(self):
+    try:
+      skip_random = random.randrange(0, self.database.advice.count())
+      result = self.database.advice.find({}).limit(1).skip(skip_random)
+      if (result != None and result[0]['title'] != None and result[0]['body'] != None):
+        section_text = result[0]['body']
+        section_header = result[0]['title']
+        with open('{folderPath}/tipOfTheDay.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+          return fopen.read().format(section_text = section_text, section_header = section_header)
+    except (Exception) as e:
+      print(e)
+      print('Something went wrong in def add_tip_of_the_day')
       return ''
 
   def add_heartrate(self, search_date:date):
