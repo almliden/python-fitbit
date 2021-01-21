@@ -9,5 +9,22 @@ def get_dates(start:datetime.datetime, end:datetime.datetime):
 def get_dates_from_string(start:str, end:str):
   return get_dates(start=datetime.datetime.fromisoformat(start), end=datetime.datetime.fromisoformat(end))
 
+def get_key(series, series_key, key):
+  for i in range(0, len(series)):
+    if (series[i][series_key] == key):
+      return i
+  return -1
+
+def find_max_top(series, series_key = 'time', top = 3, lamba = lambda k: k['value']):
+  items = []
+  i = 0
+  while (i <= top):
+    m = max(series, key = lamba )
+    items.append(m)
+    idx = get_key(series, series_key, m[series_key])
+    del series[idx]
+    i += 1
+  return items
+
 # minutes = int(fitbitRateLimit['fitbitRateLimitReset'])/60
 # seconds = 60 - (minutes % 60)

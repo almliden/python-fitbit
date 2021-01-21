@@ -3,6 +3,7 @@ from datetime import date, datetime, timedelta
 from databaseConnection import DatabaseConnection
 import configparser
 import random
+import helperFunctions as helper_functions
 
 class EmailSender:
   email_adapter = None
@@ -33,7 +34,7 @@ class EmailSender:
       self.database = database
       today = date.today().isoformat()
       queued_at = datetime.now().isoformat()
-      sent_emails= self.database.emails.find_one({'date': today, 'category': 'daily' })
+      sent_emails = self.database.emails.find_one({'date': today, 'category': 'daily' })
       if (sent_emails != None and bool(sent_emails['sent']) == True and not override_check):
         print('Already sent email: %s' % today)
         return
@@ -43,6 +44,7 @@ class EmailSender:
       email_parts = {}
       yesterdate = date.today() - timedelta(days=1)
       email_parts['steps'] = self.add_steps(yesterdate)
+      email_parts['mostActiveHour'] = self.add_most_active_hour(yesterdate)
       email_parts['restingHeartRate'] = self.add_heartrate(yesterdate)
       email_parts['tip_of_the_day'] = self.add_tip_of_the_day()
       email_parts['distance'] = self.add_distance(yesterdate)
@@ -96,6 +98,18 @@ class EmailSender:
     except (Exception) as e:
       print(e)
       print('Something went wrong in def add_tip_of_the_day')
+      return ''
+
+  def add_most_active_hour(self, search_date:date):
+    try:
+      yesterdate_active = self.database.steps.find_one({'activities-steps.dateTime' : search_date.isoformat() })
+      time_series = yesterdate_active['activities-steps-intraday']['dataset']
+      if (time_series != None):
+        top = helper_functions.find_max_top(time_series, 'time', 1)[0]
+        with open('{folderPath}/mostActiveHour.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+          return fopen.read().format(section_text = 'Your most active minute was {t}'.format(t = top['time']), section_number = top['value'])
+    except (Exception):
+      print('Something went wrong in def add_most_active_hour')
       return ''
 
   def add_heartrate(self, search_date:date):
@@ -173,7 +187,7 @@ class EmailSender:
       if (value != ''):
         sections_content += value
       else:
-        print('Tried to create content for {key}, but there was none.'.format(key=key))
+        print('Tried to create content for {key}, but there was none.'.format(key=key))   
 
     with open(self.template_file_name, 'r', -1) as fopen:
       message = fopen.read().format(
