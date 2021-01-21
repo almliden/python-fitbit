@@ -20,3 +20,4 @@ htmlcov
 ignored
 config.ini
 .python-version
+labFile.py
