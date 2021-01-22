@@ -36,14 +36,14 @@ if (len(sys.argv) > 1):
 else:
   print('No argument provided. Using default value: {default_days_to_check}.'.format(default_days_to_check=default_days_to_check))
 
-end_date = datetime.date.today()
+end_date = datetime.date.today() - datetime.timedelta(days=1)
 if (len(sys.argv) > 2):
   try:
     end_date = datetime.date.fromisoformat(sys.argv[2])
   except (ValueError):
     print('Argument erroneous. Using default value: {selected_date}.'.format(selected_date=end_date))
 
-start_date = end_date - datetime.timedelta(days=default_days_to_check)
+start_date = end_date - datetime.timedelta(days=default_days_to_check-1)
 dates_to_check = helperFunctions.get_dates(start_date, end_date)
 
 for check_date in dates_to_check:
