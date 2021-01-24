@@ -26,5 +26,9 @@ def find_max_top(series, series_key = 'time', top = 3, lamba = lambda k: k['valu
     i += 1
   return items
 
+def file_friendly_time_stamp():
+  stamp = datetime.datetime.now().isoformat()
+  return '{date}_{hour}-{minute}-{second}'.format(date=stamp[0:10], hour=stamp[11:13], minute=stamp[14:16], second=stamp[17:19])
+
 # minutes = int(fitbitRateLimit['fitbitRateLimitReset'])/60
 # seconds = 60 - (minutes % 60)
