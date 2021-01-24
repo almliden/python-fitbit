@@ -7,91 +7,83 @@ from databaseConnection import DatabaseConnection, DatabaseConfigurator
 from bson.json_util import dumps, loads
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import array
 import helper_functions
 
 class Plotter():
-  ## PANDAS
-  # heart_data = pd.DataFrame(data=yesterdate_heart['activities-heart-intraday']['dataset'])
-  # step_data = pd.DataFrame(data=yesterdate_steps['activities-steps-intraday']['dataset'])
-  # print(heart_data.head(3))
-  # print(step_data.head(3))
-
-  ## FORM: DataFrame.plot.bar(x=None, y=None, **kwargs)
-  # time_and_value = heart_data[['time','value']].head(100)
-  # time_and_value.plot.bar(x='time',y='value', rot=90)
-  # plt.show()
-
-  def PlotHeartStepData(self, step_series, heart_series, path_to_save):
-    normalized_by_minute = self._normalize_by_minute(heart_series) #yesterdate_heart['activities-heart-intraday']['dataset'])
-    heart_norm = self._set_median_by_minute(normalized_by_minute)
-    # print(normalized_by_minute[0:10])
-    # print(heart_norm[0:10])
-    # for n in norm[0:20]:
-    #   print(n)
-
-    heart = heart_norm
-    steps = step_series #yesterdate_steps['activities-steps-intraday']['dataset']
-
+  def _zip_timeseries(self, heart_series, step_series):
     vals = []
-    for h, s in zip(heart, steps):
-      vals.append({'time': s['time'], 'heart': h['value'], 'steps': s['value']})
+    missing_values = []
+    for h, s in zip(heart_series, step_series):
+      ht = datetime.datetime.fromisoformat('2000-01-01 ' + h['time'])
+      st = datetime.datetime.fromisoformat('2000-01-01 ' + s['time'])
+      if ( ht.hour != st.hour and ht.minute != st.minute ):
+        missing_values.append( { 'heart': h, 'step': s } )
+      else:
+        vals.append({'time': s['time'], 'heart': h['value'], 'steps': s['value']})
+    return vals
 
+  def plot_heart_steps(self, step_series, heart_series, path_to_save, save_file=False, show_graph=False):
+    if (save_file == show_graph and save_file == True):
+      raise Exception('Argument Exception. Incompatible arguments found. Conflicting instructions.')
+    elif (save_file == False and show_graph == False):
+      raise Exception('Argument Exception. Incompatible arguments found. No valid instruction present.')
+    if (not show_graph):
+      matplotlib.use('Agg')
     matplotlib.style.use('ggplot')
-    axes = plt.gca()
-    axes.set_ylim([0,220])
 
-    combined = pd.DataFrame(data=vals)
+    normalized_by_minute = self._normalize_by_minute(heart_series)
+    heart_normalized_series = self._set_median_by_minute(normalized_by_minute)
 
-    # combined.plot.bar(x='time', y=['heart','steps'], rot=90)
-    # combined.plot.area(x='time', y=['heart', 'steps'], rot=90)
-    # combined.plot.hist(x='time', y=['heart', 'steps'], rot=90)
+    zipped_timeseries = self._zip_timeseries(heart_normalized_series, step_series)
+    
+    combined = pd.DataFrame(data=zipped_timeseries)
     combined.plot.line(x='time', y=['heart', 'steps'], rot=90)
 
-    # fig = plt.figure()
-
-    # plt.legend()
+    plt.legend()
     plt.show()
-    # plt.plot()
+    
+    if (save_file == True):
+      file_path = '{path}.png'.format(path = path_to_save)
+      plt.savefig(file_path, transparent=True, bbox_inches='tight')
+      return file_path
 
-    file_path = '{path}.png'.format(path = path_to_save)
-    plt.savefig(file_path, transparent=True, bbox_inches='tight')
-    # plt.savefig('{0}_heart.png'.format(helper_functions.file_friendly_time_stamp()), transparent=True, bbox_inches='tight')
-    return file_path
+    if (show_graph == True):
+      return ''
 
   def _format_minute(self, minute:str):
     if (len(minute) == 2):
       return minute
     return '0'+minute
-    
+  
+  ## Fill in with data if it's missing? (Average between minutes?)
   def _normalize_by_minute(self, time_series):
-    start_time = datetime.datetime.fromisoformat('2021-01-24 ' + time_series[0]['time'])
+    start_time = datetime.datetime.fromisoformat('2000-01-01 ' + time_series[0]['time'])
     start_minute = start_time.minute
     series = []
     for time in time_series:
       if (int(time['time'][3:5]) > start_minute):
         start_minute = int(time['time'][3:5])
-      if (int(time['time'][3:5]) == 0):
+      elif (int(time['time'][3:5]) == 0):
         start_minute = 0
       val = { 'time' : '{hour}:{minute}:00'.format(hour=time['time'][0:2], minute=self._format_minute(str(start_minute))), 'value': time['value'] }
       series.append(val)
     return series
 
   def _set_median_by_minute(self, time_series):
-    first = time_series[0]
+    current_element = time_series[0]
     result = []
-    temp = []
+    temporary = []
     for time in time_series:
-      if (time['time'] == first['time']):
-        temp.append(time)
+      if (time['time'] == current_element['time']):
+        temporary.append(time)
       else:
-        median = self._get_median_in_series(temp)
+        median = self._get_median_in_series(temporary)
         result.append({ 'time': time['time'], 'value': median})
-        temp.clear()
-        temp.append(time)
-        first = time
+        temporary.clear()
+        temporary.append(time)
+        current_element = time
     return result
 
   def _get_median_in_series(self, series):
@@ -100,35 +92,21 @@ class Plotter():
       values.append(val['value'])
     values.sort()
     return values[round(len(values) / 2)]
-    # series.sort(key = lambda value: value['value'])
-    # return series[round(len(series) / 2)]
 
 def main():
-  # Initialize
   database_context = DatabaseConnection(DatabaseConfigurator('config.ini').Config())
   database = database_context.connect()
 
-  parser=configparser.ConfigParser()
-  parser.read('config.ini')
-
-  # Main
-  current_date = datetime.date.today()
-  yester_date = datetime.date.today() - datetime.timedelta(days=1)
-  search_date = yester_date
-
-  # Lab
+  search_date = datetime.date.today() - datetime.timedelta(days=1)
   yesterdate_steps = database.steps.find_one({'activities-steps.dateTime' : search_date.isoformat() })
   time_series_steps = yesterdate_steps['activities-steps-intraday']['dataset']
-
   yesterdate_heart = database.heart.find_one({'activities-heart.dateTime' : search_date.isoformat() })
   time_series_heart = yesterdate_heart['activities-heart-intraday']['dataset']
 
   plotter = Plotter()
-  plotter.PlotHeartStepData(time_series_steps, time_series_heart, helper_functions.file_friendly_time_stamp()+'_heart')
+  plotter.plot_heart_steps(time_series_steps, time_series_heart, helper_functions.file_friendly_time_stamp()+'_heart',show_graph=False, save_file=True )
   
-  # Teardown
   database_context.disconnect()
-
   sys.exit()
   os._exit(1)
 
