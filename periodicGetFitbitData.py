@@ -8,7 +8,7 @@ from databaseConnection import DatabaseConnection, DatabaseConfigurator
 from bson.json_util import dumps, loads
 from sender import EmailSender
 from fitBitClient import AuthorizedFitbitClient, ApiClient
-import helperFunctions
+import helper_functions
 
 # Initialize
 parser=configparser.ConfigParser()
@@ -44,7 +44,7 @@ if (len(sys.argv) > 2):
     print('Argument erroneous. Using default value: {selected_date}.'.format(selected_date=end_date))
 
 start_date = end_date - datetime.timedelta(days=default_days_to_check-1)
-dates_to_check = helperFunctions.get_dates(start_date, end_date)
+dates_to_check = helper_functions.get_dates(start_date, end_date)
 
 for check_date in dates_to_check:
   api_client.update_heart(check_date)

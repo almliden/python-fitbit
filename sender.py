@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 from databaseConnection import DatabaseConnection
 import configparser
 import random
-import helperFunctions as helper_functions
+import helper_functions
 
 class EmailSender:
   email_adapter = None

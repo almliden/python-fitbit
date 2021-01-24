@@ -8,13 +8,11 @@ from bson.json_util import dumps, loads
 import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt ## NEW!
+import matplotlib.pyplot as plt
 import array
-import helperFunctions as helper_functions
+import helper_functions
 
 class Plotter():
-  # def __init__(self):
-
   ## PANDAS
   # heart_data = pd.DataFrame(data=yesterdate_heart['activities-heart-intraday']['dataset'])
   # step_data = pd.DataFrame(data=yesterdate_steps['activities-steps-intraday']['dataset'])

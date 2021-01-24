@@ -3,3 +3,5 @@ requests-oauthlib>=0.7
 sshtunnel>=0.3.1
 configparser>=5.0.1
 pymongo==2.9.5
+pandas==1.2.0
+matplotlib==3.3.3
