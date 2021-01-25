@@ -4,6 +4,8 @@ from databaseConnection import DatabaseConnection
 import configparser
 import random
 import helper_functions
+from createPlot import Plotter, PlotterConfig
+from bson.json_util import dumps, loads
 
 class EmailSender:
   email_adapter = None
@@ -17,6 +19,12 @@ class EmailSender:
     10000: ['Congratulations!', '10k is not bad!'],
     15000: ['Magnificent ya filthy health-freak!', 'That\'s really good!', 'Keep it up maestro!', 'Impressive!']
   }
+  valuephrases_steps_per_minute = {
+    00 : [ 'Almost no effort, come on!', 'If you\'re feeling unwell, it might be good to take a stroll in your own capacity.' ],
+    110: [ 'No run yesterday huh?', 'A good paced walk is healthy!' ],
+    125: [ 'Well done!', 'Catched the bus?' ],
+    140: [ 'Someone\'s been working out!' ]
+  }
 
   def __init__(self):
     config = EmailAdapterConfigurator()
@@ -28,6 +36,8 @@ class EmailSender:
     self.buttonHref=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_LINK')
     self.template_file_name=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE')
     self.template_folder=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE_FOLDER')
+    self.image_api_key=parser.get('Image Hosting', 'IMAGE_API_KEY')
+    self.image_api_url=parser.get('Image Hosting', 'IMAGE_API_URL')+'?expiration=36000'
 
   def analyse(self, database: DatabaseConnection, override_check:bool, device_id:str):
     try:
@@ -38,7 +48,7 @@ class EmailSender:
       if (sent_emails != None and bool(sent_emails['sent']) == True and not override_check):
         print('Already sent email: %s' % today)
         return
-      if (sent_emails == None):
+      if (sent_emails == None and not override_check):
         self.create_intent_to_send(queued_at)
       last_sync_time = self.get_last_synced(database, device_id)
       email_parts = {}
@@ -46,6 +56,7 @@ class EmailSender:
       email_parts['steps'] = self.add_steps(yesterdate)
       email_parts['mostActiveHour'] = self.add_most_active_hour(yesterdate)
       email_parts['restingHeartRate'] = self.add_heartrate(yesterdate)
+      email_parts['heartSteps'] = self.add_heart_steps(yesterdate)
       email_parts['tip_of_the_day'] = self.add_tip_of_the_day()
       email_parts['distance'] = self.add_distance(yesterdate)
       email_parts['meditateNudge'] = self.add_meditate()
@@ -96,9 +107,22 @@ class EmailSender:
         with open('{folderPath}/tipOfTheDay.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
           return fopen.read().format(section_text = section_text, section_header = section_header)
     except (Exception) as e:
-      print(e)
       print('Something went wrong in def add_tip_of_the_day')
+      print(e)
       return ''
+  
+  def select_phrase(self, value:int, phrases:dict):
+    keys = phrases.keys()
+    phrase_key = 0
+    for k in keys:
+      if value > k:
+        phrase_key = k 
+      elif k > phrase_key:
+        break
+    possible_phrases = phrases[phrase_key]
+    phrase_index = random.randrange(0, len(possible_phrases))
+    selected_phrase = possible_phrases[phrase_index]
+    return selected_phrase
 
   def add_most_active_hour(self, search_date:date):
     try:
@@ -106,10 +130,35 @@ class EmailSender:
       time_series = yesterdate_active['activities-steps-intraday']['dataset']
       if (time_series != None):
         top = helper_functions.find_max_top(time_series, 'time', 1)[0]
+        selected_phrase = self.select_phrase(int(top['value']), self.valuephrases_steps_per_minute)
         with open('{folderPath}/mostActiveHour.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
-          return fopen.read().format(section_text = 'Your most active minute was {t}'.format(t = top['time']), section_number = top['value'])
+          return fopen.read().format(section_text = 'Your most active minute was {t}'.format(t = top['time']) + selected_phrase, section_number = top['value'])
     except (Exception):
       print('Something went wrong in def add_most_active_hour')
+      return ''
+
+  def add_heart_steps(self, search_date:date):
+    try:
+      plotter_config = PlotterConfig()
+      plotter_config.api_key = self.image_api_key
+      plotter_config.api_url = self.image_api_url
+      plotter = Plotter(plotter_config)
+
+      yesterdate_steps = self.database.steps.find_one({'activities-steps.dateTime' : search_date.isoformat() })
+      time_series_steps = yesterdate_steps['activities-steps-intraday']['dataset']
+      yesterdate_heart = self.database.heart.find_one({'activities-heart.dateTime' : search_date.isoformat() })
+      time_series_heart = yesterdate_heart['activities-heart-intraday']['dataset']
+
+      response = plotter.plot_heart_steps(time_series_steps, time_series_heart, helper_functions.file_friendly_time_stamp()+'_heart', show_graph=False, save_file=False, upload=True)
+      data = loads(response)
+      self.database.bb_images.insert_one({ helper_functions.file_friendly_time_stamp()+'_heart_steps' : data })
+      image_url = data['data']['display_url']
+      if (image_url != None):
+        with open('{folderPath}/heart-steps-image.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+          return fopen.read().format(image_url = image_url, image_alt_text = 'Your most active minute')
+    except (Exception) as e:
+      print(e)
+      print('Something went wrong in def add_heart_steps')
       return ''
 
   def add_heartrate(self, search_date:date):
@@ -139,16 +188,7 @@ class EmailSender:
       data = self.database.steps.find_one({'activities-steps.dateTime' : search_date.isoformat() })
       steps = data['activities-steps'][0]['value']
       if (steps != None):
-        keys = self.valuephrases_steps.keys()
-        phrase_key = 0
-        for k in keys:
-          if int(steps) > k:
-            phrase_key = k 
-          elif k > phrase_key:
-            break
-        possible_phrases = self.valuephrases_steps[phrase_key]
-        phrase_index = random.randrange(0, len(possible_phrases))
-        selected_phrase = possible_phrases[phrase_index]
+        selected_phrase = self.select_phrase(int(steps), self.valuephrases_steps)
         with open('{folderPath}/totalSteps.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
           return fopen.read().format(section_text = 'You took this many steps. %s The recommended number of steps per day is 10 000, but we settle for 8000 to keep our goals reasonable.' % selected_phrase, section_number = steps)
     except (Exception) as e:
