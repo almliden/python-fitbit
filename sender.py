@@ -157,7 +157,7 @@ class EmailSender:
 
       if (image_url != None):
         with open('{folderPath}/heart-steps-image.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
-          return fopen.read().format(image_url = image_url, image_alt_text = 'Your most active minute')
+          return fopen.read().format(image_url = image_url, image_alt_text = 'Your most active minute', section_header = 'Heart rate and Steps')
     except (Exception) as e:
       print('Something went wrong in def add_heart_steps')
       return self.add_debug_message('Image issue', 'Tried adding image. Stumbled upon this error: ' + str(e))
