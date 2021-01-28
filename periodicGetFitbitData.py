@@ -27,7 +27,7 @@ authorized_client = client.get_authorized_client(user_name=TOKEN_USER_NAME, clie
 api_client = ApiClient(authorized_client, database, logging_enabled=True)
 
 # Main
-default_days_to_check = 7
+default_days_to_check = 1
 if (len(sys.argv) > 1):
   try:
     default_days_to_check = int(sys.argv[1])
