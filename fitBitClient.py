@@ -151,16 +151,22 @@ class ApiClient:
         record = { 'key': 'ratelimit', 'fitbitRateLimitLimit': fitbit_rate_limit_limit, 'fitbitRateLimitRemaining': fitbit_rate_limit_remaining, 'fitbitRateLimitReset': fitbit_rate_limit_reset, 'updated': datetime.datetime.now() }
         last_request = self.database.requests.find_one({ 'key': 'ratelimit' })
         if (last_request == None):
-          self.database.requests.insert_one(record)
+          inserted = self.database.requests.insert_one(record)
+          if (not inserted.acknowledged):
+            print('Insert ratelimit not acknowledged.')
           return
         last_updated = last_request['updated']
         resets_at = last_updated + datetime.timedelta(seconds=int(last_request['fitbitRateLimitReset']))
         if (datetime.datetime.now() >= resets_at):
-          self.database.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
+          updated = self.database.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
+          if (updated == None):
+            print('Insert ratelimit not acknowledged. Requests are made.')
         elif (int(last_request['fitbitRateLimitRemaining']) > int(fitbit_rate_limit_remaining)):
-          self.database.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
-      except (Exception):
-        print('Error in rate limit handling')
+          updated = self.database.requests.find_one_and_update({ 'key': 'ratelimit' }, { '$set':  record })
+          if (updated == None):
+            print('Insert ratelimit not acknowledged. Requests should be reset.')
+      except (Exception) as e:
+        print('Error in rate limit handling: ' + str(e) )
         pass
 
   def print_rate_limits(self):
