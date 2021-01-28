@@ -61,6 +61,7 @@ class EmailSender:
       email_parts['distance'] = self.add_distance(yesterdate)
       email_parts['meditateNudge'] = self.add_meditate()
       email_parts['sleepStatsYesterDay'] = self.add_yesterday_sleep(yesterdate)
+      email_parts['sleepPieYesterday'] = self.add_yesterday_sleep_graph(yesterdate)
       email_parts['batteryLevel'] = self.add_battery_level(last_sync_time['batteryLevel'], last_sync_time['lastSyncTime'][0:19])
       sent_at = datetime.now().isoformat()
       self.send(email_parts)
@@ -161,6 +162,28 @@ class EmailSender:
     except (Exception) as e:
       print('Something went wrong in def add_heart_steps')
       return self.add_debug_message('Image issue', 'Tried adding image. Stumbled upon this error: ' + str(e))
+
+  def add_yesterday_sleep_graph(self, search_date: date):
+    try:
+      plotter_config = PlotterConfig()
+      plotter_config.api_key = self.image_api_key
+      plotter_config.api_url = self.image_api_url
+      plotter = Plotter(plotter_config)
+
+      sleep_series = self.database.sleep.find_one({'sleep.dateOfSleep':  search_date.isoformat() })
+
+      response = plotter.plot_sleep(sleep_series['summary'], helper_functions.file_friendly_time_stamp()+'_sleep_pie',show_graph=False, save_file=False, upload=True)
+      data = loads(response)
+      self.database.bb_images.insert_one({ helper_functions.file_friendly_time_stamp()+'_sleep_pie' : data })
+      image_url = data['data']['display_url']
+
+      if (image_url != None):
+        with open('{folderPath}/sleep-stages-image.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+          return fopen.read().format(image_url = image_url, image_alt_text = 'Pie chart for sleep stages', section_header = 'Sleep Stages')
+    except (Exception) as e:
+      print('Something went wrong in def add_yesterday_sleep_graph')
+      return self.add_debug_message('Image issue', 'Tried adding image. Stumbled upon this error: ' + str(e))
+
 
   def add_debug_message(self, message_header, message_body):
     try:

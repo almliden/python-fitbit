@@ -36,6 +36,38 @@ class Plotter:
       else:
         vals.append({'time': s['time'], 'heart': h['value'], 'steps': s['value']})
     return vals
+  
+  def plot_sleep(self, sleep_summary, path_to_save, save_file=False, show_graph=False, upload=False):
+    if (save_file or upload):
+      matplotlib.use('Agg')
+    matplotlib.style.use('ggplot')
+
+    combined = pd.DataFrame(data=sleep_summary)
+    colors = ['indigo', 'navy', 'darkblue', 'blue']
+    combined['stages'].plot.pie(colors = colors, title="Sleep stages")
+
+    if (save_file == True or show_graph == True):
+      plt.legend()
+      plt.show()
+    
+    if (save_file == True):
+      file_path = '{path}.png'.format(path = path_to_save)
+      plt.savefig(file_path, transparent=True, bbox_inches='tight')
+      return file_path
+
+    if (show_graph == True):
+      return ''
+
+    if (upload == True):
+      fig1 = plt.gcf()
+      plt.show()
+      plt.draw()
+      img_data = io.BytesIO()
+      fig1.savefig(img_data, transparent=True, bbox_inches='tight', format='png')
+      img_data.seek(0)
+      base64_bytes = base64.b64encode(img_data.getvalue())
+      return self._upload_image(base64_bytes)
+
 
   def plot_heart_steps(self, step_series, heart_series, path_to_save, save_file=False, show_graph=False, upload=False):
     if (save_file == show_graph and save_file == upload ):
@@ -135,20 +167,34 @@ def main():
   IMAGE_API_KEY=parser.get('Image Hosting', 'IMAGE_API_KEY')
   IMAGE_API_URL=parser.get('Image Hosting', 'IMAGE_API_URL')
 
+  conf = PlotterConfig()
+  conf.api_key = IMAGE_API_KEY
+  conf.api_url = IMAGE_API_URL+'?expiration=36000'
+  plotter = Plotter(conf)
+
+  show_graph=False
+  save_file=True
+  upload=False
+
+  ## Heart Steps
   search_date = datetime.date.today() - datetime.timedelta(days=1)
   yesterdate_steps = database.steps.find_one({'activities-steps.dateTime' : search_date.isoformat() })
   time_series_steps = yesterdate_steps['activities-steps-intraday']['dataset']
   yesterdate_heart = database.heart.find_one({'activities-heart.dateTime' : search_date.isoformat() })
   time_series_heart = yesterdate_heart['activities-heart-intraday']['dataset']
-
-  conf = PlotterConfig()
-  conf.api_key = IMAGE_API_KEY
-  conf.api_url = IMAGE_API_URL+'?expiration=36000'
-  plotter = Plotter(conf)
-  show_graph=False
-  save_file=True
-  upload=False
   raw_response = plotter.plot_heart_steps(time_series_steps, time_series_heart, helper_functions.file_friendly_time_stamp()+'_heart',show_graph=show_graph, save_file=save_file, upload=upload)
+  if (upload):
+    response = loads(raw_response)
+    inserted = database.bb_images.insert_one({ helper_functions.file_friendly_time_stamp()+'_heart' : response })
+    if (not inserted.acknowledged):
+      print("Problem writing to database.")
+  elif (save_file):
+    print('File saved! Name: ' + raw_response)
+
+  ## Sleep Pie
+  sleep_plotter = Plotter(conf)
+  sleep_series = database.sleep.find_one({'sleep.dateOfSleep':  datetime.date.today().isoformat() })
+  raw_response = sleep_plotter.plot_sleep(sleep_series['summary'], helper_functions.file_friendly_time_stamp()+'_sleep_pie',show_graph=show_graph, save_file=save_file, upload=upload)
   if (upload):
     response = loads(raw_response)
     inserted = database.bb_images.insert_one({ helper_functions.file_friendly_time_stamp()+'_heart' : response })
