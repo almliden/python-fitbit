@@ -145,11 +145,17 @@ def main():
   conf.api_key = IMAGE_API_KEY
   conf.api_url = IMAGE_API_URL+'?expiration=36000'
   plotter = Plotter(conf)
-  raw_response = plotter.plot_heart_steps(time_series_steps, time_series_heart, helper_functions.file_friendly_time_stamp()+'_heart',show_graph=False, save_file=False, upload=True)
-  response = loads(raw_response)
-  inserted = database.bb_images.insert_one({ helper_functions.file_friendly_time_stamp()+'_heart' : response })
-  if (not inserted.acknowledged):
-    print("Problem writing to database.")
+  show_graph=False
+  save_file=True
+  upload=False
+  raw_response = plotter.plot_heart_steps(time_series_steps, time_series_heart, helper_functions.file_friendly_time_stamp()+'_heart',show_graph=show_graph, save_file=save_file, upload=upload)
+  if (upload):
+    response = loads(raw_response)
+    inserted = database.bb_images.insert_one({ helper_functions.file_friendly_time_stamp()+'_heart' : response })
+    if (not inserted.acknowledged):
+      print("Problem writing to database.")
+  elif (save_file):
+    print('File saved! Name: ' + raw_response)
 
   database_context.disconnect()
   sys.exit()
