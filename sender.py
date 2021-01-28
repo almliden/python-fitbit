@@ -65,7 +65,8 @@ class EmailSender:
       sent_at = datetime.now().isoformat()
       self.send(email_parts)
       self.confirm_email_sent(queued_at, sent_at)
-    except (Exception):
+    except (Exception) as e:
+      print(e)
       print('Something went wrong in sending email.')
   
   def get_last_synced(self, db, device_id:str):
@@ -153,13 +154,24 @@ class EmailSender:
       data = loads(response)
       self.database.bb_images.insert_one({ helper_functions.file_friendly_time_stamp()+'_heart_steps' : data })
       image_url = data['data']['display_url']
+
       if (image_url != None):
         with open('{folderPath}/heart-steps-image.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
           return fopen.read().format(image_url = image_url, image_alt_text = 'Your most active minute')
     except (Exception) as e:
-      print(e)
       print('Something went wrong in def add_heart_steps')
-      return ''
+      return self.add_debug_message('Image issue', 'Tried adding image. Stumbled upon this error: ' + str(e))
+
+  def add_debug_message(self, message_header, message_body):
+    try:
+      with open('{folderPath}/debug.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
+        return fopen.read().format(section_text = message_body, section_header = message_header)
+    except (Exception):
+      print('Something went wrong in def add_debug_message')
+      try:
+        return message_body
+      except Exception:
+        return 'Failed adding debug message. Something is fishy!'
 
   def add_heartrate(self, search_date:date):
     try:

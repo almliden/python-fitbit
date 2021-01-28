@@ -45,8 +45,13 @@ if (last_sync_time_result != None and datetime.date.fromisoformat(last_sync_time
 
 api_client.print_rate_limits()
 
-# Debug
-# send_email_update(database, device_id=DEVICE_ID, override_check = True)
+# Debug: send True as argument to force send email update
+if (len(sys.argv) > 1):
+  try:
+    override_check = bool(sys.argv[1])
+    send_email_update(database, device_id=DEVICE_ID, override_check = override_check)
+  except (ValueError):
+    print('Could not understand argument provided.')
 
 # Teardown
 del api_client
