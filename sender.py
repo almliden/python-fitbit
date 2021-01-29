@@ -37,9 +37,9 @@ class EmailSender:
     self.template_file_name=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE')
     self.template_folder=parser.get('Email Daily Health Report', 'EMAIL_DAILY_HEALTH_REPORT_TEMPLATE_FOLDER')
     self.image_api_key=parser.get('Image Hosting', 'IMAGE_API_KEY')
-    self.image_api_url=parser.get('Image Hosting', 'IMAGE_API_URL')+'?expiration=36000'
+    self.image_api_url=parser.get('Image Hosting', 'IMAGE_API_URL')+'?expiration=360000'
 
-  def analyse(self, database: DatabaseConnection, override_check:bool, device_id:str):
+  def analyse(self, database: DatabaseConnection, device_id:str, override_check:bool=False):
     try:
       self.database = database
       today = date.today().isoformat()
@@ -48,7 +48,7 @@ class EmailSender:
       if (sent_emails != None and bool(sent_emails['sent']) == True and not override_check):
         print('Already sent email: %s' % today)
         return
-      if (sent_emails == None and not override_check):
+      if (sent_emails == None):
         self.create_intent_to_send(queued_at)
       last_sync_time = self.get_last_synced(database, device_id)
       email_parts = {}

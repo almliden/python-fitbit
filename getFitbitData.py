@@ -27,7 +27,7 @@ api_client = ApiClient(authorized_client, database, logging_enabled=True)
 
 def send_email_update(database, device_id, override_check = False):
   sender = EmailSender()
-  sender.analyse(database, override_check, device_id)
+  sender.analyse(database, device_id=device_id, override_check=override_check)
 
 # Main
 api_client.devices()
