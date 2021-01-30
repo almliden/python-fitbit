@@ -47,7 +47,6 @@ class Plotter:
     combined['stages'].plot.pie(colors = colors, title="Sleep stages")
 
     if (save_file == True or show_graph == True):
-      plt.legend()
       plt.show()
     
     if (save_file == True):

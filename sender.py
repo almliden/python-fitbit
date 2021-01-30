@@ -159,6 +159,8 @@ class EmailSender:
       if (image_url != None):
         with open('{folderPath}/heart-steps-image.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
           return fopen.read().format(image_url = image_url, image_alt_text = 'Your most active minute', section_header = 'Heart rate and Steps')
+          
+      del plotter
     except (Exception) as e:
       print('Something went wrong in def add_heart_steps')
       return self.add_debug_message('Image issue', 'Tried adding image. Stumbled upon this error: ' + str(e))
@@ -180,6 +182,8 @@ class EmailSender:
       if (image_url != None):
         with open('{folderPath}/sleep-stages-image.html'.format(folderPath=self.template_folder), 'r', -1) as fopen:
           return fopen.read().format(image_url = image_url, image_alt_text = 'Pie chart for sleep stages', section_header = 'Sleep Stages')
+
+      del plotter
     except (Exception) as e:
       print('Something went wrong in def add_yesterday_sleep_graph')
       return self.add_debug_message('Image issue', 'Tried adding image. Stumbled upon this error: ' + str(e))
